@@ -1,0 +1,13 @@
+server:
+  port: 8080
+spring:
+  datasource:
+    type: com.zaxxer.hikari.HikariDataSource
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql:///report_manager_db?characterEncoding=utf8&useSSL=false&serverTimezone=UTC&rewriteBatchedStatements=true
+    username: root
+    password: root
+#修改默认的上传文件大小为150M(默认为1MB)
+  servlet:
+    multipart:
+      max-file-size: 150MB

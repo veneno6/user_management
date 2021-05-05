@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0,user-scalable=no,minimal-ui" />
+  <title>highcharts图表报表</title>
+  <link rel="stylesheet" href="css/charts_demo.css">
+  <script src="js/vuejs-2.5.16.js"></script>
+  <script src="js/axios-0.18.0.js"></script>
+  <script src="js/highcharts.js"></script>
+  <script src="js/highcharts-3d.js"></script>
+  <script src="js/highcharts-more.js"></script>
+  <script src="js/drilldown.js"></script>
+
+
+</head>
+<body>
+<div id="app" class="my-box">
+  <div class="my-box-left">
+    <button @click="columnCharts">统计各部门人数</button> <br/> <br/>
+    <button @click="lineCharts">月份入职人数统计</button> <br/> <br/>
+    <button @click="pieCharts">员工地方来源统计</button> <br/> <br/>
+  </div>
+  <div class="my-box-right">
+    <div id="container" style="height:450px;"></div>
+  </div>
+</div>
+</body>
+<script>
+  new Vue({
+    el:"#app",
+    data:{},
+    methods: {
+      // 统计各部门人数
+      columnCharts() {
+        axios.get("/stat/columnCharts").then(res=>{
+          //res.data = [{deptName:"财务部",num:11},{},{}]
+          let titles = [];
+          let values = [];
+          for (let i = 0; i<res.data.length; i++) {
+            titles[i] = res.data[i].deptName;
+            values[i] = res.data[i].num;
+          }
+
+          //调用js渲染数据
+          var chart = Highcharts.chart('container',{
+            chart: {
+              type: 'column'
+            },
+            title: {
+              text: '各部门人数'
+            },
+            xAxis: {
+              categories: titles,
+              crosshair: true
+            },
+            yAxis: {
+              min: 0,
+              title: {
+                text: '人数'
+              }
+            },
+            tooltip: {
+              // head + 每个 point + footer 拼接成完整的 table
+              headerFormat: '<span style="font-size:10px">{point.key}</span><table>',
+              pointFormat: '<tr><td style="color:{series.color};padding:0">{series.name}: </td>' +
+                      '<td style="padding:0"><b>{point.y:0.f} 人</b></td></tr>',
+              footerFormat: '</table>',
+              shared: true,
+              useHTML: true
+            },
+            plotOptions: {
+              column: {
+                borderWidth: 0
+              }
+            },
+            series: [{
+              name: '人数',
+              data: values
+            }]
+          });
+        })
+
+      },
+
+      // 月份入职人数统计
+      lineCharts(){
+        axios.get("/stat/lineCharts").then(res=>{
+          //res.data = [{name:"01",num:2},{},{}]
+          let titles = [];
+          let values = [];
+          for (let i = 0; i<res.data.length; i++) {
+            titles[i] = res.data[i].name;
+            values[i] = res.data[i].num;
+          }
+
+          var chart = Highcharts.chart('container', {
+            chart: {
+              type: 'line'
+            },
+            title: {
+              text: '入职人数'
+            },
+            xAxis: {
+              categories: titles
+            },
+            yAxis: {
+              title: {
+                text: '人数'
+              }
+            },
+            plotOptions: {
+              line: {
+                dataLabels: {
+                  // 开启数据标签
+                  enabled: true
+                },
+                // 关闭鼠标跟踪，对应的提示框、点击事件会失效
+                enableMouseTracking: false
+              }
+            },
+            series: [{
+              name: '月份',
+              data: values
+            }]
+          });
+        })
+
+      },
+
+      // 员工地方来源统计
+      pieCharts(){
+        axios.get("/stat/pieCharts").then(res=>{
+          //数据的构造如下
+          /*[
+            {
+              name: '山东省',
+              y: 7,
+              drilldown: '山东省',
+              id: '山东省'
+              data: [
+                {'济南市',5},
+                {'威海市',5},
+                {'青岛市',5}
+              ]
+            }
+          ]*/
+
+          Highcharts.chart('container', {
+            chart: {
+              /*type: 'column'*/
+              type: 'pie'
+            },
+            title: {
+              text: '公司地方来源'
+            },
+            xAxis: {
+              type: 'category'
+            },
+            yAxis: {
+              title: {
+                text: '人数'
+              }
+            },
+            legend: {
+              enabled: false
+            },
+            plotOptions: {
+              series: {
+                borderWidth: 0,
+                dataLabels: {
+                  enabled: true,
+                  format: '{point.y}'
+                }
+              }
+            },
+            tooltip: {
+              headerFormat: '<span style="font-size:11px">{series.name}</span><br>',
+              pointFormat: '<span style="color:{point.color}">{point.name}</span>: <b>{point.y}</b> 人<br/>'
+            },
+            series:[{
+              name: '各地方',
+              colorByPoint: true,
+              data: res.data
+            }],
+            drilldown: {
+              series: res.data
+            }
+          });
+
+        })
+      }
+    }
+  });
+</script>
+</html>
